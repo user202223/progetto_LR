@@ -4,8 +4,18 @@ NBLOCKS = 10# number of blocks chosen from user
 
 NBLOCKS_IMAGE = 100#number of blocks in the file image created
 FILE_IMAGE = my_file_image# the file where is saved the file system metadata and the block device content
-LOOPX = loop10# the loop device selected
 MOUNT_POINT = my_mount_point# directory where to mount the file system
+
+# Find the number of the first free loopX device and save it in a variable
+#		losetup: a command-line utility for setting up and configuring loop devices
+#		-f:		 option tells losetup to find the first available loop device
+#		grep:	 command is used to search for patterns within text. 
+#		-o: 	 option tells grep to only output the matched part of the line 
+#		-E:		 option enables extended regular expressions, used to search for a number consisting of one or more digits in the output of the "losetup -f" command
+#		[0-9]+:  the pattern searches for one or more digits in the output
+LOOP_NUM := $(shell losetup -f | grep -oE '[0-9]+')# take the first free loopX device
+LOOPX := loop$(LOOP_NUM)# the free loop device selected
+LOOPX_BUSY := $(shell  losetup -a | grep $(FILE_IMAGE) | grep -oE 'loop[0-9]+')# the loop device now busy
 
 KVERSION := $(shell uname -r)# current kernel build version
 PWD := $(CURDIR)# absolute pathname of the current working director
@@ -48,6 +58,17 @@ else
 endif
 # create the image
 	dd if=/dev/zero of=$(FILE_IMAGE) bs=4096 count=$(NBLOCKS_IMAGE)
+
+# Save the first free loopX device in module_parameters.h
+# ----> write_number_loopX:
+#	@echo $(LOOP_NUM)
+#	@echo $(LOOPX)
+#		sed:					  Stream editor used for text manipulation. It allows you to modify files by applying certain patterns or expressions.
+#		-i:						  Option used with the "sed" command to edit files in-place. When this option is used, the original file is modified directly without creating a backup.
+#		's|pattern|replacement|': Substitute command in sed. It searches for a pattern within the file and replaces it with the provided replacement text.
+# 		"/dev/loop[^"]*":		  consider everything that follows "/dev/loop" except the doble quote "
+#		module_parameters.h:	  is the name of the file that will be modified by the sed command
+	sed -i 's|#define MY_DEV_LOOPX "/dev/loop[^"]*"|#define MY_DEV_LOOPX "/dev/loop$(LOOP_NUM)"|' module_parameters.h
 
 # Associate the file FILE_IMAGE with the loop device LOOPX (/dev/loop0)
 # Map the file to a block device, then the LOOPX can now be used as a normal block device
@@ -110,7 +131,8 @@ unload:
 clean:
 	make -C /lib/modules/$(KVERSION)/build M=$(PWD) clean
 # new system calls
-	sudo losetup --detach /dev/$(LOOPX)
+	@echo $(LOOPX_BUSY)
+	sudo losetup --detach /dev/$(LOOPX_BUSY)
 	rm ./$(FILE_IMAGE)
 # file system
 	rm singlefilemakefs
@@ -130,7 +152,7 @@ info_loop:
 # print modules informations 
 info_modules:
 # lsmod needs the module file with .ko
-	echo "Module                  Size  Used by"
+	@echo "Module                  Size  Used by"
 	lsmod | grep the_usctm
 	lsmod | grep singlefilefs
 	modinfo the_usctm.ko
