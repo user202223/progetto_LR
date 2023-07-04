@@ -18,6 +18,7 @@ singlefilefs-objs := ./singlefile-FS/singlefilefs_src.o ./singlefile-FS/file.o .
 # force rebuild for new tests: is it solves problems related to "make <<target>> is up to date"
 .PHONY: test_operations
 
+all:
 # ============================ LOOP0 - BLOCK DEVICE ============================
 
 # The loop device is not a file system. It is a device driver that makes a regular file accessible just like a block device.
@@ -33,7 +34,7 @@ singlefilefs-objs := ./singlefile-FS/singlefilefs_src.o ./singlefile-FS/file.o .
 #		of=FILE_IMAGE: 		 set the output file to FILE_IMAGE
 #		bs=4096: 	   		 set the block size to 4096 bytes
 #		count=NBLOCKS_IMAGE: set the number of blocks to copy to NBLOCKS_IMAGE
-create_file_image:
+# ----> create_file_image:
 # check that NBLOCKS <= NBLOCKS_IMAGE
 ifeq ($(shell [ $(NBLOCKS) -lt $(NBLOCKS_IMAGE) ] && echo 1),1)
 	$(info CASE 1 ----> NBLOCKS < NBLOCKS_IMAGE : $(NBLOCKS) < $(NBLOCKS_IMAGE))
@@ -54,44 +55,26 @@ endif
 #		losetup: 	a command-line utility for setting up and configuring loop devices
 #		/dev/LOOPX: the loop device to associate with the file
 #		./my_file:  the file to associate with the loop device
-link_file_to_block_device:
+# ----> link_file_to_block_device:
 	sudo losetup /dev/$(LOOPX) ./$(FILE_IMAGE)
-
-info_loop:
-# List the loop devices existing in the system and get their status
-	losetup
-# List all devices associated with a file
-	losetup --associated ./$(FILE_IMAGE)
-# list information about all available block devices (--bytes: in bytes)
-	lsblk
-	lsblk --bytes
 
 # ============================ DEVICE DRIVER CONFIGURATIONS - LOAD ============================
 
 # compile all necessary files
-all:
+# ----> all:
 	make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules
 	gcc -Wall -pedantic -o singlefilemakefs ./singlefile-FS/singlefilemakefs.c
 
 # load the modules
-load:
+# ----> load:
 # new system calls
 	sudo insmod the_usctm.ko
 # file system
 	sudo insmod singlefilefs.ko
-	dmesg | tail -50
-
-# print modules informations 
-info_modules:
-# lsmod needs the module file with .ko
-	echo "Module                  Size  Used by"
-	lsmod | grep the_usctm
-	lsmod | grep singlefilefs
-	modinfo the_usctm.ko
-	modinfo singlefilefs.ko
+# dmesg | tail -50
 
 # write the file system metadata
-create_file_system:
+# ----> create_file_system:
 	./singlefilemakefs $(FILE_IMAGE)
 
 # mount the file system in the specified directory
@@ -99,14 +82,9 @@ create_file_system:
 #		-t singlefilefs: option to specify the type of file system to be mounted
 #		/dev/LOOPX:		 specify the device file to be mounted, which is a loop device that is used to mount a file as a block device
 #		./MOUNT_POINT/:  specify the directory where the file system should be mounted
-mount_file_system:
+# ----> mount_file_system:
 	mkdir $(MOUNT_POINT)
 	sudo mount -t singlefilefs /dev/$(LOOPX) ./$(MOUNT_POINT)/
-
-# print file system informations 
-info_file_system:
-	mount | grep singlefilefs
-	findmnt
 
 # ============================ DEVICE DRIVER TEST ============================
 
@@ -116,7 +94,7 @@ test_operations:
 	gcc -Wall -pedantic -o test_sc ./test/demo.c
 	sudo ./test_sc $(NBLOCKS)
 	rm test_sc
-#dmesg | tail -150
+# dmesg | tail -150
 
 # ============================ DEVICE DRIVER CONFIGURATIONS - UNLOAD ============================
 
@@ -127,7 +105,7 @@ unload:
 # file system
 	sudo umount ./$(MOUNT_POINT)/
 	sudo rmmod singlefilefs.ko
-	dmesg | tail -20
+# dmesg | tail -20
 
 clean:
 	make -C /lib/modules/$(KVERSION)/build M=$(PWD) clean
@@ -137,3 +115,28 @@ clean:
 # file system
 	rm singlefilemakefs
 	rm -r $(MOUNT_POINT)
+
+# ============================ INFO ============================
+
+info_loop:
+# List the loop devices existing in the system and get their status
+	losetup
+# List all devices associated with a file
+	losetup --associated ./$(FILE_IMAGE)
+# list information about all available block devices (--bytes: in bytes)
+	lsblk
+	lsblk --bytes
+
+# print modules informations 
+info_modules:
+# lsmod needs the module file with .ko
+	echo "Module                  Size  Used by"
+	lsmod | grep the_usctm
+	lsmod | grep singlefilefs
+	modinfo the_usctm.ko
+	modinfo singlefilefs.ko
+
+# print file system informations 
+info_file_system:
+	mount | grep singlefilefs
+	findmnt
