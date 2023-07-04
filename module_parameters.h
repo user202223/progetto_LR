@@ -13,7 +13,7 @@ extern struct mutex my_mutex;
 
 // ==================== add_new_sc / my_system_calls ====================
 #define MY_BLOCK_SIZE 4096
-#define MY_DEV_LOOPX "/dev/loop7"
+#define MY_DEV_LOOPX "/dev/loop10"
 
 #define SIZE_BIT_MAP NBLOCKS    // the size of my bit map, that is how many blocks can exist
 #define BLOCK_NUMBER_BIT_MAP 2  // the specific block where is the bit map

@@ -4,7 +4,7 @@ NBLOCKS = 10# number of blocks chosen from user
 
 NBLOCKS_IMAGE = 100#number of blocks in the file image created
 FILE_IMAGE = my_file_image# the file where is saved the file system metadata and the block device content
-LOOPX = loop7# the loop device selected
+LOOPX = loop10# the loop device selected
 MOUNT_POINT = my_mount_point# directory where to mount the file system
 
 KVERSION := $(shell uname -r)# current kernel build version
