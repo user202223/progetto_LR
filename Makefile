@@ -13,9 +13,9 @@ MOUNT_POINT = my_mount_point# directory where to mount the file system
 #		-o: 	 option tells grep to only output the matched part of the line 
 #		-E:		 option enables extended regular expressions, used to search for a number consisting of one or more digits in the output of the "losetup -f" command
 #		[0-9]+:  the pattern searches for one or more digits in the output
-LOOP_NUM := $(shell losetup -f | grep -oE '[0-9]+')# take the first free loopX device
+LOOP_NUM := $(shell sudo losetup -f | grep -oE '[0-9]+')# take the first free loopX device
 LOOPX := loop$(LOOP_NUM)# the free loop device selected
-LOOPX_BUSY := $(shell  losetup -a | grep $(FILE_IMAGE) | grep -oE 'loop[0-9]+')# the loop device now busy
+LOOPX_BUSY := $(shell losetup -a | grep $(FILE_IMAGE) | grep -oE 'loop[0-9]+')# the loop device now busy
 
 KVERSION := $(shell uname -r)# current kernel build version
 PWD := $(CURDIR)# absolute pathname of the current working director
@@ -25,7 +25,7 @@ obj-m += the_usctm.o singlefilefs.o
 the_usctm-objs := ./add_new_sc/usctm.o ./add_new_sc/vtpmo.o ./my_system_calls/bit_map.o ./my_system_calls/new_system_call.o
 singlefilefs-objs := ./singlefile-FS/singlefilefs_src.o ./singlefile-FS/file.o ./singlefile-FS/dir.o ./my_system_calls/new_system_call.o ./my_system_calls/bit_map.o
 
-# force rebuild for new tests: is it solves problems related to "make <<target>> is up to date"
+# Force rebuild for new tests: is it solves problems related to "make <<target>> is up to date"
 .PHONY: test_operations
 
 all:
@@ -81,12 +81,12 @@ endif
 
 # ============================ DEVICE DRIVER CONFIGURATIONS - LOAD ============================
 
-# compile all necessary files
+# Compile all necessary files
 # ----> all:
 	make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules
 	gcc -Wall -pedantic -o singlefilemakefs ./singlefile-FS/singlefilemakefs.c
 
-# load the modules
+# Load the modules
 # ----> load:
 # new system calls
 	sudo insmod the_usctm.ko
@@ -94,11 +94,11 @@ endif
 	sudo insmod singlefilefs.ko
 # dmesg | tail -50
 
-# write the file system metadata
+# Write the file system metadata
 # ----> create_file_system:
 	./singlefilemakefs $(FILE_IMAGE)
 
-# mount the file system in the specified directory
+# Mount the file system in the specified directory
 #		mount: 			 command used to mount a file system on a directory
 #		-t singlefilefs: option to specify the type of file system to be mounted
 #		/dev/LOOPX:		 specify the device file to be mounted, which is a loop device that is used to mount a file as a block device
@@ -119,7 +119,7 @@ test_operations:
 
 # ============================ DEVICE DRIVER CONFIGURATIONS - UNLOAD ============================
 
-# unload the modules
+# Unload the modules
 unload:
 # new system calls
 	sudo rmmod the_usctm.ko
@@ -128,6 +128,7 @@ unload:
 	sudo rmmod singlefilefs.ko
 # dmesg | tail -20
 
+# Remove all unnecessary files
 clean:
 	make -C /lib/modules/$(KVERSION)/build M=$(PWD) clean
 # new system calls
@@ -140,6 +141,9 @@ clean:
 
 # ============================ INFO ============================
 
+# Commands to display informations
+
+# Print loopX informations 
 info_loop:
 # List the loop devices existing in the system and get their status
 	losetup
@@ -149,7 +153,7 @@ info_loop:
 	lsblk
 	lsblk --bytes
 
-# print modules informations 
+# Print modules informations 
 info_modules:
 # lsmod needs the module file with .ko
 	@echo "Module                  Size  Used by"
@@ -158,7 +162,7 @@ info_modules:
 	modinfo the_usctm.ko
 	modinfo singlefilefs.ko
 
-# print file system informations 
+# Print file system informations 
 info_file_system:
 	mount | grep singlefilefs
 	findmnt
