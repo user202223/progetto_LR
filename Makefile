@@ -20,11 +20,6 @@ LOOPX_BUSY := $(shell losetup -a | grep $(FILE_IMAGE) | grep -oE 'loop[0-9]+')# 
 KVERSION := $(shell uname -r)# current kernel build version
 PWD := $(CURDIR)# absolute pathname of the current working director
 
-
-
-
-
-
 obj-m += the_usctm.o singlefilefs.o
 
 the_usctm-objs := ./add_new_sc/usctm.o ./add_new_sc/vtpmo.o ./my_system_calls/bit_map.o ./my_system_calls/new_system_call.o
