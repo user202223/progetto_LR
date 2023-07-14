@@ -28,10 +28,6 @@ singlefilefs-objs := ./singlefile-FS/singlefilefs_src.o ./singlefile-FS/file.o .
 # Force rebuild for new tests: is it solves problems related to "make <<target>> is up to date"
 .PHONY: test_operations
 
-
-
-
-
 all:
 # ============================ LOOP0 - BLOCK DEVICE ============================
 
